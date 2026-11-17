@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101b32"><link rel="manifest" href="/static/manifest.webmanifest">
+<title>Avengers Chennai Tracker</title>
+<style>
+:root{color-scheme:dark;--bg:#080d18;--panel:#111c30;--line:#253754;--muted:#9aabc4;--cyan:#66d9ff;--green:#62e6b0}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#1d3b61 0,transparent 55%),var(--bg);color:#f4f7fc;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:760px;margin:auto;padding:22px 16px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font-size:12px;letter-spacing:3px;color:var(--cyan);font-weight:800}.pill{border:1px solid #31506f;border-radius:99px;padding:7px 10px;color:#b8dff1;font-size:11px}
+h1{font-size:clamp(29px,8vw,44px);line-height:1.04;margin:28px 0 8px;letter-spacing:-1.5px}.sub{color:var(--muted);margin:0 0 22px}
+.hero{background:linear-gradient(135deg,#142c4b,#101729 65%);border:1px solid #294465;border-radius:22px;padding:20px;box-shadow:0 15px 50px #0005}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.city{color:var(--cyan);font-size:12px;letter-spacing:2px;font-weight:800}
+.movie{font-size:22px;font-weight:750;margin:8px 0 4px}.release{color:#b8c8dc;font-size:13px}
+button,a.btn{border:0;border-radius:12px;padding:13px 16px;background:var(--cyan);color:#06101b;font-weight:800;text-decoration:none;cursor:pointer;font-size:14px}
+button.secondary,a.secondary{background:#1a2a43;color:#e8f3ff;border:1px solid #355071}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:16px;min-width:0}
+.card h2{font-size:15px;margin:0 0 8px}.muted{color:var(--muted);font-size:12px}.state{font-size:14px;margin:10px 0 0;color:#d8e5f5;overflow-wrap:anywhere}
+.section{margin-top:24px}.section h2{font-size:17px}.event{border-bottom:1px solid var(--line);padding:12px 0}.event:last-child{border:0}.event small{color:var(--muted)}
+.notice{background:#201e16;border:1px solid #51452b;color:#e9d8a5;border-radius:13px;padding:13px;font-size:12px;line-height:1.5;margin-top:16px}
+footer{color:#7f91aa;font-size:11px;line-height:1.5;margin-top:25px}
+#status{color:var(--green);font-size:13px}#events{margin-top:8px}
+@media(max-width:420px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.actions button,.actions a{flex:1;text-align:center}}
+</style></head><body><main>
+<div class="top"><div class="logo">S T A R K // SHOW INTEL</div><div class="pill">CHENNAI ONLY</div></div>
+<h1>AVENGERS<br>SHOW TRACKER</h1><p class="sub">A simple watchtower for new cinema listings.</p>
+<section class="hero">
+<div class="row"><div class="city">TARGET CITY · CHENNAI, INDIA</div><div id="status">Connecting…</div></div>
+<div class="movie">Avengers: Doomsday</div><div class="release">Expected theatrical release: 17 December 2026</div>
+<div class="actions"><button id="check">CHECK NOW</button><button class="secondary" id="alerts">ENABLE ALERTS</button></div>
+</section>
+<div class="grid">
+<div class="card"><h2>District</h2><div class="muted" id="districtTime">Not checked yet</div><div class="state" id="districtState">Waiting for first scan</div><p><a class="btn secondary" target="_blank" rel="noopener" href="https://www.district.in/movies/avengers-doomsday-movie-tickets-MV176735">OPEN DISTRICT ↗</a></p></div>
+<div class="card"><h2>BookMyShow</h2><div class="muted" id="bmsTime">Not checked yet</div><div class="state" id="bmsState">Waiting for first scan</div><p><a class="btn secondary" target="_blank" rel="noopener" href="https://in.bookmyshow.com/movies/chennai/avengers-doomsday/ET00439706">OPEN BMS ↗</a></p></div>
+</div>
+<section class="section"><div class="row"><h2>Detection history</h2><span class="muted" id="updated">No scan yet</span></div><div id="events" class="card"><div class="muted">No changes detected yet. The first scan establishes a baseline.</div></div></section>
+<div class="notice"><b>Important:</b> This app checks publicly visible page text. These ticketing sites may load showtimes dynamically or restrict automated requests. A failed scan does not mean tickets are unavailable, and detected text is not proof that seats can be booked. Always confirm on the official booking page.</div>
+<footer>Automatic checks run on the server every 5 minutes while the server is online. Browser alerts work while this page is open; background push alerts require additional push-service configuration. No CAPTCHA, login, or access-control bypass is attempted.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let lastEvents=new Set();
+function nice(t){if(!t)return 'Not checked yet';try{return new Date(t).toLocaleString()}catch{return t}}
+function render(d){
+ $('status').textContent=d.status||'Ready';
+ $('updated').textContent='Last scan: '+nice(d.updated_at);
+ for(const [key,id] of [['District','district'],['BookMyShow','bms']]){
+  const s=(d.sources||{})[key]||{};
+  $(id+'Time').textContent=nice(s.checked_at);
+  $(id+'State').textContent=s.error?'Could not access page — open the official site to verify.':(s.lines?.length?'Page text scanned; see history for changes.':'No show details extracted yet.');
+ }
+ const events=d.events||[];
+ $('events').innerHTML=events.length?events.slice(0,30).map(e=>`<div class="event"><b>${escapeHtml(e.site)}</b><div>${escapeHtml(e.text)}</div><small>${nice(e.detected_at)}</small></div>`).join(''):'<div class="muted">No changes detected yet. The first scan establishes a baseline.</div>';
+ for(const e of events){const k=e.site+'|'+e.text+'|'+e.detected_at;if(!lastEvents.has(k)){if(lastEvents.size&&Notification.permission==='granted')new Notification('Avengers Chennai update',{body:e.site+': '+e.text});lastEvents.add(k)}}
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function load(){try{const r=await fetch('/api/status');render(await r.json())}catch{$('status').textContent='Server unavailable'}}
+$('check').onclick=async()=>{$('check').disabled=true;$('check').textContent='CHECKING…';try{const r=await fetch('/api/check',{method:'POST'});render(await r.json())}catch{$('status').textContent='Check failed'}finally{$('check').disabled=false;$('check').textContent='CHECK NOW'}};
+$('alerts').onclick=async()=>{if(!('Notification'in window)){alert('Notifications are not supported in this browser.');return}const p=await Notification.requestPermission();$('alerts').textContent=p==='granted'?'ALERTS ENABLED':'ALERTS NOT ENABLED'};
+if('serviceWorker'in navigator)navigator.serviceWorker.register('/static/sw.js').catch(()=>{});
+load();setInterval(load,30000);
+</script></body></html>

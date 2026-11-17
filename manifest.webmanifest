@@ -1,0 +1,10 @@
+{
+  "name": "Avengers Chennai Tracker",
+  "short_name": "Avengers Tracker",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080d18",
+  "theme_color": "#101b32",
+  "description": "Track Avengers: Doomsday show listing changes in Chennai.",
+  "icons": []
+}
